@@ -1,36 +1,21 @@
 const express = require('express');
 const Tesseract = require('tesseract.js');
 const os = require('os');
-const si = require('systeminformation');
 
 const PORT = 8834;
 const app = express();
 const authToken = "YOUR_AUTH_TOKEN_HERE";
 let scheduler = null;
 let lastActivityTime = new Date();
-let numWorkers = 0;
+let numWorkers = 0
 // Mảng để lưu trữ các worker
 let workers = [];
-
 app.get("/", (req, res) => {
   res.sendFile(__dirname + '/dmhauiChat.html');
 });
-
-// Hàm chuyển đổi byte sang kích thước phù hợp
-function convertSize(size_bytes) {
-  if (size_bytes == 0) return "0B";
-  const size_name = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(size_bytes) / Math.log(1024));
-  return (size_bytes / Math.pow(1024, i)).toFixed(2) + ' ' + size_name[i];
-}
-
-// Định nghĩa endpoint GET API để lấy thông tin hệ thống
-app.get("/api/info", async (req, res) => {
+// Định nghĩa endpoint GET API để lấy thông tin về bộ nhớ RAM và số lượng worker
+app.get("/api/info", (req, res) => {
   try {
-    const battery = await si.battery();
-    const memory = await si.mem();
-    const disk = await si.fsSize();
-    const networkInterfaces = await si.networkStats();
     const receivedTime = new Date();
     const completionTime = new Date();
     const ping = completionTime - receivedTime; // Execution time in milliseconds.
@@ -40,25 +25,7 @@ app.get("/api/info", async (req, res) => {
       success: true,
       usage: usedMemory,
       ping: ping,
-      currentWorkers: numWorkers,
-      battery_status: {
-        percentage: battery.percent,
-        plugged_in: battery.acConnected
-      },
-      memory_status: {
-        total: convertSize(memory.total),
-        available: convertSize(memory.available),
-        used: convertSize(memory.used)
-      },
-      storage_status: {
-        total: convertSize(disk[0].size),
-        used: convertSize(disk[0].used),
-        free: convertSize(disk[0].size - disk[0].used)
-      },
-      network_status: {
-        bytes_received: convertSize(networkInterfaces[0].rx_bytes),
-        bytes_sent: convertSize(networkInterfaces[0].tx_bytes)
-      }
+      currentWorkers: numWorkers
     });
   } catch (error) {
     console.error("Error:", error);
@@ -149,4 +116,4 @@ app.listen(PORT, () => {
 });
 
 // Export the Express API
-module.exports = app;
+module.exports = app
