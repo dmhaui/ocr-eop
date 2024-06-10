@@ -2,7 +2,7 @@ const express = require('express');
 const Tesseract = require('tesseract.js');
 const os = require('os');
 
-const PORT = 80;
+const PORT = 8834;
 const app = express();
 const authToken = "YOUR_AUTH_TOKEN_HERE";
 let scheduler = null;
