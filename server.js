@@ -2,6 +2,7 @@ const express = require('express');
 const Tesseract = require('tesseract.js');
 const os = require('os');
 const si = require('systeminformation');
+const { exec } = require('child_process');
 
 const PORT = 8834;
 const app = express();
@@ -47,29 +48,50 @@ app.get("/api/info", async (req, res) => {
       free: "N/A"
     };
 
-    res.json({
-      success: true,
-      usage: usedMemory,
-      ping: ping,
-      currentWorkers: numWorkers,
-      battery_status: {
-        percentage: battery.percent,
-        plugged_in: battery.acConnected
-      },
-      memory_status: {
-        total: convertSize(memory.total),
-        available: convertSize(memory.available),
-        used: convertSize(memory.used)
-      },
-      storage_status: storage_status,
-      network_status: networkInterfaces.length > 0 ? {
-        bytes_received: convertSize(networkInterfaces[0].rx_bytes),
-        bytes_sent: convertSize(networkInterfaces[0].tx_bytes)
-      } : {
-        bytes_received: "N/A",
-        bytes_sent: "N/A"
+    // Chạy speedtest-cli và lấy kết quả
+    exec('speedtest-cli --json', (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error executing speedtest-cli: ${error.message}`);
+        res.status(500).json({ success: false, error: "Internal server error" });
+        return;
       }
+      if (stderr) {
+        console.error(`Speedtest-cli stderr: ${stderr}`);
+        res.status(500).json({ success: false, error: "Internal server error" });
+        return;
+      }
+
+      const speedtestResult = JSON.parse(stdout);
+
+      res.json({
+        success: true,
+        usage: usedMemory,
+        ping: ping,
+        currentWorkers: numWorkers,
+        battery_status: {
+          percentage: battery.percent,
+          plugged_in: battery.acConnected
+        },
+        memory_status: {
+          total: convertSize(memory.total),
+          available: convertSize(memory.available),
+          used: convertSize(memory.used)
+        },
+        storage_status: storage_status,
+        network_status: networkInterfaces.length > 0 ? {
+          bytes_received: convertSize(networkInterfaces[0].rx_bytes),
+          bytes_sent: convertSize(networkInterfaces[0].tx_bytes)
+        } : {
+          bytes_received: "N/A",
+          bytes_sent: "N/A"
+        },
+        network_speed: {
+          download: (speedtestResult.download / 1e6).toFixed(2) + ' Mbps',
+          upload: (speedtestResult.upload / 1e6).toFixed(2) + ' Mbps'
+        }
+      });
     });
+
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ success: false, error: "Internal server error" });
