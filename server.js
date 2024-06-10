@@ -36,6 +36,17 @@ app.get("/api/info", async (req, res) => {
     const ping = completionTime - receivedTime; // Execution time in milliseconds.
     const usedMemory = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2) + " MB";
 
+    // Kiểm tra nếu disk không rỗng và có phần tử đầu tiên
+    const storage_status = disk.length > 0 ? {
+      total: convertSize(disk[0].size),
+      used: convertSize(disk[0].used),
+      free: convertSize(disk[0].size - disk[0].used)
+    } : {
+      total: "N/A",
+      used: "N/A",
+      free: "N/A"
+    };
+
     res.json({
       success: true,
       usage: usedMemory,
@@ -50,14 +61,13 @@ app.get("/api/info", async (req, res) => {
         available: convertSize(memory.available),
         used: convertSize(memory.used)
       },
-      storage_status: {
-        total: convertSize(disk[0].size),
-        used: convertSize(disk[0].used),
-        free: convertSize(disk[0].size - disk[0].used)
-      },
-      network_status: {
+      storage_status: storage_status,
+      network_status: networkInterfaces.length > 0 ? {
         bytes_received: convertSize(networkInterfaces[0].rx_bytes),
         bytes_sent: convertSize(networkInterfaces[0].tx_bytes)
+      } : {
+        bytes_received: "N/A",
+        bytes_sent: "N/A"
       }
     });
   } catch (error) {
