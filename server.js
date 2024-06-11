@@ -4,7 +4,7 @@ const os = require('os');
 const si = require('systeminformation');
 const { exec } = require('child_process');
 
-const PORT = 8834;
+const PORT = 5454;
 const app = express();
 const authToken = "YOUR_AUTH_TOKEN_HERE";
 let scheduler = null;
